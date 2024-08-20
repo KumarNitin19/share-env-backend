@@ -1,5 +1,6 @@
 const { db } = require("../share-env-backend/firebase");
 
+// function to fetch data from firestore
 const getENVData = async () => {
   try {
     const collectionRef = db.collection("Projects");
@@ -13,4 +14,5 @@ const getENVData = async () => {
     console.log("Error : ", error);
   }
 };
-getENVData();
+
+// getENVData();
