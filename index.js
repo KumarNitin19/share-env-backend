@@ -1,18 +1,7 @@
-const { db } = require("../share-env-backend/firebase");
+const express = require("express");
+const dotenv = require("dotenv");
 
-// function to fetch data from firestore
-const getENVData = async () => {
-  try {
-    const collectionRef = db.collection("Projects");
-    const finalData = [];
-    const projectSnap = await collectionRef.get();
-    projectSnap.forEach((project) => {
-      finalData.push(project.data());
-    });
-    return finalData;
-  } catch (error) {
-    console.log("Error : ", error);
-  }
-};
+dotenv.config();
+const PORT = process.env.PORT || 7000;
 
-// getENVData();
+const app = express();
