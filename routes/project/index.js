@@ -8,3 +8,5 @@ router.post("/create-project", authenticateUser, protect);
 router.post("/edit-project-name", authenticateUser, protect);
 router.post("/add-variable", authenticateUser, protect);
 router.post("/edit-variable-label", authenticateUser, protect);
+
+module.exports = router;
