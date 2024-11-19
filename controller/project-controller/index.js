@@ -7,3 +7,5 @@ const editProject = asyncHandler((req, res) => {});
 const deleteProject = asyncHandler((req, res) => {});
 
 const getAllProjects = asyncHandler((req, res) => {});
+
+module.exports = { createProject, editProject, deleteProject, getAllProjects };
