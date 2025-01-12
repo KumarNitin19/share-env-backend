@@ -119,3 +119,28 @@ app.get("/protected", authenticate, (req, res) => {
     userId: req.user.userId,
   });
 });
+
+app.post("/add-tenant", async (req, res) => {
+  const { idToken, tenantId } = req.body;
+
+  if (!idToken || !tenantId) {
+    return res.status(400).json({ error: "idToken and tenantId are required" });
+  }
+
+  try {
+    // Verify the Firebase ID Token to get the user's UID
+    const decodedToken = await admin.auth().verifyIdToken(idToken);
+    const uid = decodedToken.uid;
+
+    // Add tenantId as a custom claim
+    await admin.auth().setCustomUserClaims(uid, { tenantId });
+
+    res.json({
+      message: `Tenant ID '${tenantId}' added to user '${uid}'`,
+    });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ error: "Failed to add tenantId", details: error.message });
+  }
+});
