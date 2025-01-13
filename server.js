@@ -1,6 +1,6 @@
 const express = require("express");
 const dotenv = require("dotenv");
-const crypto = require("crypto");
+
 // const cors = require("cors");
 // const cliRoutes = require("./routes/cli-routes");
 // const projectRoutes = require("./routes/project");
@@ -15,4 +15,4 @@ const app = express();
 // app.use("/app/v1", projectRoutes);
 // app.listen(PORT, console.log(`App running on port ${PORT}`));
 
-console.log(crypto.randomBytes(64).toString("base64"));
+// console.log(crypto.randomBytes(64).toString("base64"));

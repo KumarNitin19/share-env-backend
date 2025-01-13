@@ -34,7 +34,7 @@ const generateRefreshToken = (payload) => {
 };
 
 // Verify Firebase ID Token and Issue JWT + Refresh Token
-app.post("/signin", async (req, res) => {
+async function VerifyFirebaseToken(req, res) {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -58,7 +58,7 @@ app.post("/signin", async (req, res) => {
   } catch (error) {
     res.status(401).json({ error: "Invalid Firebase token" });
   }
-});
+}
 
 // Refresh Access Token
 app.post("/refresh-token", (req, res) => {
@@ -144,3 +144,5 @@ app.post("/add-tenant", async (req, res) => {
       .json({ error: "Failed to add tenantId", details: error.message });
   }
 });
+
+module.exports = { VerifyFirebaseToken };
