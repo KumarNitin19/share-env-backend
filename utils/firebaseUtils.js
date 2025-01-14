@@ -1,3 +1,6 @@
+const admin = require("firebase-admin");
+const bcrypt = require("bcrypt");
+
 // Verify Firebase ID Token and Issue JWT + Refresh Token
 async function VerifyFirebaseToken(req, res) {
   const authHeader = req.headers.authorization;
@@ -25,4 +28,17 @@ async function VerifyFirebaseToken(req, res) {
   }
 }
 
-module.exports = { VerifyFirebaseToken };
+async function SaveAccessAndRefreshToken(userId, accessToken, refreshToken) {
+  const access_token_hash = await bcrypt.hash(accessToken, 10);
+  const refresh_token_hash = await bcrypt.hash(refreshToken, 10);
+  // Save to database
+  await db.collection("tokens").insertOne({
+    user_id: userId,
+    access_token_hash: access_token_hash,
+    refresh_token_hash: refresh_token_hash,
+    created_at: new Date(),
+    revoked: false,
+  });
+}
+
+module.exports = { VerifyFirebaseToken, SaveAccessAndRefreshToken };

@@ -3,34 +3,18 @@ const jwt = require("jsonwebtoken");
 const admin = require("firebase-admin");
 const dotenv = require("dotenv");
 const asyncHandler = require("express-async-handler");
+const {
+  generateAccessToken,
+  generateRefreshToken,
+} = require("../../utils/helper");
+const { SaveAccessAndRefreshToken } = require("../../utils/firebaseUtils");
 dotenv.config();
 
 const app = express();
 app.use(express.json());
 
-// Secret keys for JWT
-const JWT_SECRET = process.env.JWT_SECRET; // Use a strong secret for JWT
-const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET; // Use a different secret for refresh tokens
-
-// In-memory storage for refresh tokens (use a database in production)
-const refreshTokensStore = {};
-
-// Generate JWT Token
-const generateAccessToken = (payload) => {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: "15m" });
-};
-
-// Generate Refresh Token
-const generateRefreshToken = (payload) => {
-  const refreshToken = jwt.sign(payload, JWT_REFRESH_SECRET, {
-    expiresIn: "7d",
-  });
-  refreshTokensStore[refreshToken] = true;
-  return refreshToken;
-};
-
-// Refresh Access Token
-const RefreshTokem = asyncHandler(async (req, res) => {
+// User login
+const Login = asyncHandler(async (req, res) => {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -39,24 +23,83 @@ const RefreshTokem = asyncHandler(async (req, res) => {
       .json({ error: "Authorization header is missing or invalid" });
   }
 
-  const refreshToken = authHeader.split(" ")[1]; // Extract the refresh token
+  const firebaseToken = authHeader.split(" ")[1]; // Extract the refresh token
+  try {
+    // Verify Firebase token
+    const decodedToken = await admin.auth().verifyIdToken(firebaseToken);
+    const { uid, email, name } = decodedToken; // Extract user data
 
-  if (!refreshTokensStore[refreshToken]) {
-    return res.status(403).json({ error: "Invalid refresh token" });
+    // Check if the user exists in your database
+    let user = await db.collection("users").findOne({ firebase_uid: uid });
+    if (!user) {
+      // If user doesn't exist, create a new one
+      user = {
+        firebase_uid: uid,
+        email,
+        name: name || "Anonymous",
+        created_at: new Date(),
+      };
+      await db.collection("users").insertOne(user);
+    }
+
+    // Generate JWT tokens
+    const payload = { userId: user._id, email: user.email };
+    const accessToken = generateAccessToken(payload);
+    const refreshToken = generateRefreshToken(payload);
+
+    await SaveAccessAndRefreshToken(user._id, accessToken, refreshToken);
+
+    res.status(200).json({
+      accessToken,
+      refreshToken,
+      message: "User logged-in successfully!!",
+    });
+  } catch (error) {
+    console.error("Error verifying Firebase token:", error);
+    res.status(401).send("Invalid Firebase token");
+  }
+});
+
+// Refresh Access Token
+const RefreshToken = asyncHandler(async (req, res) => {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res
+      .status(400)
+      .json({ error: "Authorization header is missing or invalid" });
   }
 
   try {
-    const payload = jwt.verify(refreshToken, JWT_REFRESH_SECRET);
-    const newAccessToken = generateAccessToken({ userId: payload.userId });
-    const newRefreshToken = generateRefreshToken({ userId: payload.userId });
+    // Verify refresh token
+    const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
 
-    // Remove old refresh token and store the new one
-    delete refreshTokensStore[refreshToken];
-    refreshTokensStore[newRefreshToken] = true;
+    // Check if the refresh token is valid
+    const tokens = await db
+      .collection("tokens")
+      .find({ user_id: decoded.userId, revoked: false })
+      .toArray();
+    const isValid = await Promise.any(
+      tokens.map((token) =>
+        bcrypt.compare(refreshToken, token.refresh_token_hash)
+      )
+    );
+    if (!isValid) return res.status(403).send("Invalid refresh token");
+
+    // Generate new tokens
+    const payload = { userId: decoded.userId, email: decoded.email };
+    const newAccessToken = generateAccessToken(payload);
+    const newRefreshToken = generateRefreshToken(payload);
+
+    await SaveAccessAndRefreshToken(
+      decoded.userId,
+      newAccessToken,
+      newRefreshToken
+    );
 
     res.json({ accessToken: newAccessToken, refreshToken: newRefreshToken });
-  } catch (error) {
-    res.status(403).json({ error: "Invalid or expired refresh token" });
+  } catch (err) {
+    res.status(403).send("Invalid or expired refresh token");
   }
 });
 
@@ -85,4 +128,4 @@ const AddTenant = asyncHandler(async (req, res) => {
   }
 });
 
-module.exports = { AddTenant, RefreshTokem };
+module.exports = { AddTenant, RefreshToken, Login };
