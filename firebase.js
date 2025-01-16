@@ -1,6 +1,13 @@
-import { initializeApp } from "firebase/app";
-import config from "./config.js";
+const admin = require("firebase-admin");
+const config = require("./serviceAccountKey.json");
 
-const firebase = initializeApp(config.firebaseConfig);
+// Initialize Firebase Admin SDK
+if (!admin.apps.length) {
+  admin.initializeApp({
+    credential: admin.credential.cert(config.firebaseConfig),
+  });
+}
 
-export default firebase;
+const db = admin.firestore();
+
+module.exports = { admin, db };

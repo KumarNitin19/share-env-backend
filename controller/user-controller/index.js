@@ -8,6 +8,7 @@ const {
   generateRefreshToken,
 } = require("../../utils/helper");
 const { SaveAccessAndRefreshToken } = require("../../utils/firebaseUtils");
+const { db } = require("../../firebase");
 dotenv.config();
 
 const app = express();
