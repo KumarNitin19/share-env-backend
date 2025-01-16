@@ -26,38 +26,42 @@ const Login = asyncHandler(async (req, res) => {
 
   const firebaseToken = authHeader.split(" ")[1]; // Extract the refresh token
   try {
-    // Verify Firebase token
+    // 1. Verify the Firebase token
     const decodedToken = await admin.auth().verifyIdToken(firebaseToken);
-    const { uid, email, name } = decodedToken; // Extract user data
+    const { uid, email, name, picture } = decodedToken;
 
-    // Check if the user exists in your database
-    let user = await db.collection("users").findOne({ firebase_uid: uid });
-    if (!user) {
-      // If user doesn't exist, create a new one
-      user = {
-        firebase_uid: uid,
-        email,
-        name: name || "Anonymous",
-        created_at: new Date(),
-      };
-      await db.collection("users").insertOne(user);
+    console.log("Token verified for UID:", uid);
+
+    // 2. Check if the user exists in Firestore
+    const userDoc = await db.collection("users").doc(uid).get();
+
+    if (userDoc.exists) {
+      // User exists in Firestore
+      console.log("User already exists in Firestore.");
+      return res
+        .status(200)
+        .send({ message: "User already exists", user: userDoc.data() });
     }
 
-    // Generate JWT tokens
-    const payload = { userId: user._id, email: user.email };
-    const accessToken = generateAccessToken(payload);
-    const refreshToken = generateRefreshToken(payload);
+    // 3. Register the user in Firestore if not present
+    const newUser = {
+      uid,
+      email: email || null,
+      name: name || "Anonymous",
+      picture: picture || null,
+      createdAt: new Date(),
+    };
 
-    await SaveAccessAndRefreshToken(user._id, accessToken, refreshToken);
+    await db.collection("users").doc(uid).set(newUser);
 
-    res.status(200).json({
-      accessToken,
-      refreshToken,
-      message: "User logged-in successfully!!",
-    });
+    console.log("User registered successfully:", newUser);
+
+    res
+      .status(201)
+      .send({ message: "User registered successfully", user: newUser });
   } catch (error) {
-    console.error("Error verifying Firebase token:", error);
-    res.status(401).send("Invalid Firebase token");
+    console.error("Error processing request:", error);
+    res.status(400).send({ error: "Failed to verify token or register user" });
   }
 });
 
