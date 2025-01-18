@@ -1,7 +1,5 @@
-const express = require("express");
 const jwt = require("jsonwebtoken");
 const admin = require("firebase-admin");
-const dotenv = require("dotenv");
 const asyncHandler = require("express-async-handler");
 const {
   generateAccessToken,
@@ -9,10 +7,6 @@ const {
 } = require("../../utils/helper");
 const { SaveAccessAndRefreshToken } = require("../../utils/firebaseUtils");
 const { db } = require("../../firebase");
-dotenv.config();
-
-const app = express();
-app.use(express.json());
 
 // User login
 const Login = asyncHandler(async (req, res) => {
