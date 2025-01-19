@@ -7,11 +7,13 @@ const {
 } = require("../../utils/helper");
 const { SaveAccessAndRefreshToken } = require("../../utils/firebaseUtils");
 const { db } = require("../../firebase");
+const { v4: uuidv4 } = require("uuid");
+const { setCustomClaims } = require("../../utils/userUtils");
 
 // User login
 const Login = asyncHandler(async (req, res) => {
   const authHeader = req.headers.authorization;
-
+  // Verifying header
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     return res
       .status(400)
@@ -24,18 +26,21 @@ const Login = asyncHandler(async (req, res) => {
     const decodedToken = await admin.auth().verifyIdToken(firebaseToken);
     const { uid, email, name, picture } = decodedToken;
 
-    console.log("Token verified for UID:", uid);
-
     // 2. Check if the user exists in Firestore
     const userDoc = await db.collection("users").doc(uid).get();
 
     if (userDoc.exists) {
       // User exists in Firestore
-      console.log("User already exists in Firestore.");
+      const tenantId = uuidv4();
+      await admin.auth().setCustomUserClaims(uid, { varVaultId: tenantId });
       return res
         .status(200)
         .send({ message: "User already exists", user: userDoc.data() });
     }
+
+    // Add tenantId as a custom claim
+    const tenantId = uuidv4();
+    await setCustomClaims(uid, tenantId);
 
     // 3. Register the user in Firestore if not present
     const newUser = {
@@ -44,15 +49,15 @@ const Login = asyncHandler(async (req, res) => {
       name: name || "Anonymous",
       picture: picture || null,
       createdAt: new Date(),
+      tenantId,
     };
 
     await db.collection("users").doc(uid).set(newUser);
 
-    console.log("User registered successfully:", newUser);
-
-    res
-      .status(201)
-      .send({ message: "User registered successfully", user: newUser });
+    res.status(201).send({
+      message: "User registered successfully",
+      user: newUser,
+    });
   } catch (error) {
     console.error("Error processing request:", error);
     res.status(400).send({ error: "Failed to verify token or register user" });
@@ -102,29 +107,4 @@ const RefreshToken = asyncHandler(async (req, res) => {
   }
 });
 
-const AddTenant = asyncHandler(async (req, res) => {
-  const { idToken, tenantId } = req.body;
-
-  if (!idToken || !tenantId) {
-    return res.status(400).json({ error: "idToken and tenantId are required" });
-  }
-
-  try {
-    // Verify the Firebase ID Token to get the user's UID
-    const decodedToken = await admin.auth().verifyIdToken(idToken);
-    const uid = decodedToken.uid;
-
-    // Add tenantId as a custom claim
-    await admin.auth().setCustomUserClaims(uid, { tenantId });
-
-    res.json({
-      message: `Tenant ID '${tenantId}' added to user '${uid}'`,
-    });
-  } catch (error) {
-    res
-      .status(500)
-      .json({ error: "Failed to add tenantId", details: error.message });
-  }
-});
-
-module.exports = { AddTenant, RefreshToken, Login };
+module.exports = { RefreshToken, Login };
