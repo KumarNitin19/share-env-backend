@@ -32,7 +32,6 @@ const Login = asyncHandler(async (req, res) => {
     if (userDoc.exists) {
       // User exists in Firestore
       const tenantId = uuidv4();
-      await admin.auth().setCustomUserClaims(uid, { varVaultId: tenantId });
       return res
         .status(200)
         .send({ message: "User already exists", user: userDoc.data() });
