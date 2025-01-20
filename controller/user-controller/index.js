@@ -31,15 +31,14 @@ const Login = asyncHandler(async (req, res) => {
 
     if (userDoc.exists) {
       // User exists in Firestore
-      const tenantId = uuidv4();
-      return res
-        .status(200)
-        .send({ message: "User already exists", user: userDoc.data() });
+      return res.status(200).json({
+        message: "User already exists",
+        user: {
+          ...userDoc.data(),
+          varVaultPrivateKey: decodedToken?.varVaultPrivateKey,
+        },
+      });
     }
-
-    // Add tenantId as a custom claim
-    const tenantId = uuidv4();
-    await setCustomClaims(uid, tenantId);
 
     // 3. Register the user in Firestore if not present
     const newUser = {
@@ -48,18 +47,20 @@ const Login = asyncHandler(async (req, res) => {
       name: name || "Anonymous",
       picture: picture || null,
       createdAt: new Date(),
-      tenantId,
     };
 
     await db.collection("users").doc(uid).set(newUser);
 
-    res.status(201).send({
+    res.status(201).json({
       message: "User registered successfully",
       user: newUser,
     });
   } catch (error) {
-    console.error("Error processing request:", error);
-    res.status(400).send({ error: "Failed to verify token or register user" });
+    // console.error("Error processing request:", error);
+    res.status(400).json({
+      status: 403,
+      message: "Failed to verify token or register user",
+    });
   }
 });
 
@@ -102,8 +103,27 @@ const RefreshToken = asyncHandler(async (req, res) => {
 
     res.json({ accessToken: newAccessToken, refreshToken: newRefreshToken });
   } catch (err) {
-    res.status(403).send("Invalid or expired refresh token");
+    res.status(403).json({
+      status: 403,
+      message: "Invalid or expired refresh token",
+    });
   }
 });
 
-module.exports = { RefreshToken, Login };
+const AddPrivateKeyToFirebaseClaims = asyncHandler(async (req, res) => {
+  try {
+    // Add tenantId as a custom claim
+    const varVaultPrivateKey = uuidv4();
+    await setCustomClaims(uid, varVaultPrivateKey);
+    res.status(200).json({
+      message: "Private key successfully generated!!",
+      privateKey: varVaultPrivateKey,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Something went wrong, please try again!!",
+    });
+  }
+});
+
+module.exports = { RefreshToken, Login, AddPrivateKeyToFirebaseClaims };
