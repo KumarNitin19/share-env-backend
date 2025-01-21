@@ -9,4 +9,12 @@ const setCustomClaims = async (uid, tenantId) => {
   }
 };
 
-module.exports = { setCustomClaims };
+const getUserUid = async (req) => {
+  const authHeader = req.headers.authorization;
+  const firebaseToken = authHeader.split(" ")[1]; // Extract the token
+
+  const decodedToken = await admin.auth().verifyIdToken(firebaseToken);
+  return decodedToken?.uid;
+};
+
+module.exports = { setCustomClaims, getUserUid };
