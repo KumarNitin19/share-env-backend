@@ -1,5 +1,7 @@
+const { admin } = require("../firebase");
+
 // Middleware to Authenticate and Check User Validity
-const authenticateUser = (req, res, next) => {
+const authenticateUser = async (req, res, next) => {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -8,14 +10,12 @@ const authenticateUser = (req, res, next) => {
       .json({ error: "Authorization header is missing or invalid" });
   }
 
-  const token = authHeader.split(" ")[1]; // Extract the JWT token
+  const firebaseToken = authHeader.split(" ")[1]; // Extract the token
 
   try {
-    // Verify the JWT Token
-    const payload = jwt.verify(token, JWT_SECRET);
+    // 1. Verify the Firebase token
+    const user = await admin.auth().verifyIdToken(firebaseToken);
 
-    // Check if the user exists in the database or in-memory store
-    const user = users[payload.userId];
     if (!user) {
       return res.status(403).json({ error: "User not found or invalid" });
     }
@@ -24,6 +24,7 @@ const authenticateUser = (req, res, next) => {
     req.user = user;
     next();
   } catch (error) {
+    console.log(error);
     return res.status(401).json({ error: "Invalid or expired token" });
   }
 };

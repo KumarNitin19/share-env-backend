@@ -9,8 +9,8 @@ const {
 
 const router = express.Router();
 
-router.get("/get-all-projects", getAllProjects);
-router.post("/create-project", authenticateUser, createProject);
+router.get("/projects", authenticateUser, getAllProjects);
+router.post("/add-project", authenticateUser, createProject);
 router.put("/edit-project", authenticateUser, editProject);
 router.delete("/delete-project", authenticateUser, deleteProject);
 

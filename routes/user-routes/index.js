@@ -13,6 +13,5 @@ router.post(
   authenticateUser,
   AddPrivateKeyToFirebaseClaims
 );
-// router.post("/refresh-token");
 
 module.exports = router;

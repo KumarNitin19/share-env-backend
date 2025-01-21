@@ -20,7 +20,7 @@ const Login = asyncHandler(async (req, res) => {
       .json({ error: "Authorization header is missing or invalid" });
   }
 
-  const firebaseToken = authHeader.split(" ")[1]; // Extract the refresh token
+  const firebaseToken = authHeader.split(" ")[1]; // Extract the token
   try {
     // 1. Verify the Firebase token
     const decodedToken = await admin.auth().verifyIdToken(firebaseToken);
@@ -64,52 +64,7 @@ const Login = asyncHandler(async (req, res) => {
   }
 });
 
-// Refresh Access Token
-const RefreshToken = asyncHandler(async (req, res) => {
-  const authHeader = req.headers.authorization;
-
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return res
-      .status(400)
-      .json({ error: "Authorization header is missing or invalid" });
-  }
-
-  try {
-    // Verify refresh token
-    const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
-
-    // Check if the refresh token is valid
-    const tokens = await db
-      .collection("tokens")
-      .find({ user_id: decoded.userId, revoked: false })
-      .toArray();
-    const isValid = await Promise.any(
-      tokens.map((token) =>
-        bcrypt.compare(refreshToken, token.refresh_token_hash)
-      )
-    );
-    if (!isValid) return res.status(403).send("Invalid refresh token");
-
-    // Generate new tokens
-    const payload = { userId: decoded.userId, email: decoded.email };
-    const newAccessToken = generateAccessToken(payload);
-    const newRefreshToken = generateRefreshToken(payload);
-
-    await SaveAccessAndRefreshToken(
-      decoded.userId,
-      newAccessToken,
-      newRefreshToken
-    );
-
-    res.json({ accessToken: newAccessToken, refreshToken: newRefreshToken });
-  } catch (err) {
-    res.status(403).json({
-      status: 403,
-      message: "Invalid or expired refresh token",
-    });
-  }
-});
-
+// To generate and add private key to custom claims
 const AddPrivateKeyToFirebaseClaims = asyncHandler(async (req, res) => {
   try {
     // Add tenantId as a custom claim
@@ -126,4 +81,4 @@ const AddPrivateKeyToFirebaseClaims = asyncHandler(async (req, res) => {
   }
 });
 
-module.exports = { RefreshToken, Login, AddPrivateKeyToFirebaseClaims };
+module.exports = { Login, AddPrivateKeyToFirebaseClaims };
