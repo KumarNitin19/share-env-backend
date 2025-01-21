@@ -1,11 +1,5 @@
-const jwt = require("jsonwebtoken");
 const admin = require("firebase-admin");
 const asyncHandler = require("express-async-handler");
-const {
-  generateAccessToken,
-  generateRefreshToken,
-} = require("../../utils/helper");
-const { SaveAccessAndRefreshToken } = require("../../utils/firebaseUtils");
 const { db } = require("../../firebase");
 const { v4: uuidv4 } = require("uuid");
 const { setCustomClaims } = require("../../utils/userUtils");
