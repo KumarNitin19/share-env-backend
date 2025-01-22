@@ -47,7 +47,47 @@ const createProject = asyncHandler(async (req, res) => {
   }
 });
 
-const editProject = asyncHandler((req, res) => {});
+const editProject = asyncHandler(async (req, res) => {
+  try {
+    const { projectId } = req.params; // Extract projectId from the URL
+    const { projectName, projectDescription } = req.body; // Extract fields to update
+
+    // Validate input
+    if (!projectName && !projectDescription) {
+      return res.status(400).json({
+        error:
+          "At least one field (projectName or projectDescription) must be provided.",
+      });
+    }
+
+    // Reference the project document
+    const projectRef = db.collection("projects").doc(projectId);
+    const projectDoc = await projectRef.get();
+
+    // Check if the project exists
+    if (!projectDoc.exists) {
+      return res.status(404).json({ error: "Project not found." });
+    }
+
+    // Prepare update fields
+    const updates = {};
+    if (projectName) updates.projectName = projectName;
+    if (projectDescription) updates.projectDescription = projectDescription;
+    updates.updatedAt = new Date(); // Track when the update occurred
+
+    // Update the project in Firestore
+    await projectRef.update(updates);
+
+    // Respond with success
+    res.status(200).json({
+      message: "Project updated successfully!",
+      projectId: projectId,
+    });
+  } catch (error) {
+    console.error("Error updating project:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
 
 const deleteProject = asyncHandler((req, res) => {});
 
