@@ -12,6 +12,6 @@ const router = express.Router();
 router.get("/projects/", authenticateUser, getAllProjects);
 router.post("/add-project/", authenticateUser, createProject);
 router.put("/project/:projectId", authenticateUser, editProject);
-router.delete("/delete-project/", authenticateUser, deleteProject);
+router.delete("/delete-project/:projectId", authenticateUser, deleteProject);
 
 module.exports = router;

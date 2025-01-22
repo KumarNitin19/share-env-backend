@@ -3,6 +3,30 @@ const { getUserUid } = require("../../utils/userUtils");
 const { v4: uuidv4 } = require("uuid");
 const { db } = require("../../firebase");
 
+const getAllProjects = asyncHandler(async (req, res) => {
+  try {
+    const uid = await getUserUid(req);
+    const projectsRef = db.collection("projects");
+    const querySnapshot = await projectsRef.where("uid", "==", uid).get();
+
+    if (querySnapshot.empty) {
+      return res
+        .status(404)
+        .json({ error: "No projects found for this user." });
+    }
+
+    const projects = querySnapshot.docs.map((doc) => ({
+      projectId: doc.id,
+      ...doc.data(),
+    }));
+
+    res.status(200).json(projects);
+  } catch (error) {
+    console.error("Error fetching projects:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
 const createProject = asyncHandler(async (req, res) => {
   try {
     const uid = await getUserUid(req);
@@ -89,28 +113,29 @@ const editProject = asyncHandler(async (req, res) => {
   }
 });
 
-const deleteProject = asyncHandler((req, res) => {});
-
-const getAllProjects = asyncHandler(async (req, res) => {
+const deleteProject = asyncHandler(async (req, res) => {
   try {
-    const uid = await getUserUid(req);
-    const projectsRef = db.collection("projects");
-    const querySnapshot = await projectsRef.where("uid", "==", uid).get();
+    const { projectId } = req.params; // Extract projectId from the URL
 
-    if (querySnapshot.empty) {
-      return res
-        .status(404)
-        .json({ error: "No projects found for this user." });
+    // Reference the project document
+    const projectRef = db.collection("projects").doc(projectId);
+    const projectDoc = await projectRef.get();
+
+    // Check if the project exists
+    if (!projectDoc.exists) {
+      return res.status(404).json({ error: "Project not found." });
     }
 
-    const projects = querySnapshot.docs.map((doc) => ({
-      projectId: doc.id,
-      ...doc.data(),
-    }));
+    // Delete the project from Firestore
+    await projectRef.delete();
 
-    res.status(200).json(projects);
+    // Respond with success
+    res.status(200).json({
+      message: "Project deleted successfully!",
+      projectId: projectId,
+    });
   } catch (error) {
-    console.error("Error fetching projects:", error);
+    console.error("Error deleting project:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
