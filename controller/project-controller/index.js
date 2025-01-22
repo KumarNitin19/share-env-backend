@@ -3,6 +3,7 @@ const { getUserUid } = require("../../utils/userUtils");
 const { v4: uuidv4 } = require("uuid");
 const { db } = require("../../firebase");
 
+// To get all projects of a user
 const getAllProjects = asyncHandler(async (req, res) => {
   try {
     const uid = await getUserUid(req);
@@ -27,6 +28,7 @@ const getAllProjects = asyncHandler(async (req, res) => {
   }
 });
 
+// To create a new project
 const createProject = asyncHandler(async (req, res) => {
   try {
     const uid = await getUserUid(req);
@@ -71,6 +73,7 @@ const createProject = asyncHandler(async (req, res) => {
   }
 });
 
+// To update the project
 const editProject = asyncHandler(async (req, res) => {
   try {
     const { projectId } = req.params; // Extract projectId from the URL
@@ -113,6 +116,7 @@ const editProject = asyncHandler(async (req, res) => {
   }
 });
 
+// To delete the project
 const deleteProject = asyncHandler(async (req, res) => {
   try {
     const { projectId } = req.params; // Extract projectId from the URL

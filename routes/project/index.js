@@ -9,9 +9,12 @@ const {
 
 const router = express.Router();
 
-router.get("/projects/", authenticateUser, getAllProjects);
-router.post("/add-project/", authenticateUser, createProject);
-router.put("/project/:projectId", authenticateUser, editProject);
-router.delete("/delete-project/:projectId", authenticateUser, deleteProject);
+router.get("/projects/", authenticateUser, getAllProjects); // To get all projects
+
+router.post("/add-project/", authenticateUser, createProject); // To create a project
+
+router.put("/project/:projectId", authenticateUser, editProject); // To update the project
+
+router.delete("/delete-project/:projectId", authenticateUser, deleteProject); // To delete the project
 
 module.exports = router;
