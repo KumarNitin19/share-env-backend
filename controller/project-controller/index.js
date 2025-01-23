@@ -28,7 +28,29 @@ const getAllProjects = asyncHandler(async (req, res) => {
   }
 });
 
-const getProject = asyncHandler(async (req, res) => {});
+const getProject = asyncHandler(async (req, res) => {
+  try {
+    const { projectId } = req.params; // Extract projectId from the URL
+
+    // Reference the project document
+    const projectRef = db.collection("projects").doc(projectId);
+    const projectDoc = await projectRef.get();
+
+    // Check if the project exists
+    if (!projectDoc.exists) {
+      return res.status(404).json({ error: "Project not found." });
+    }
+
+    // Return the project data
+    res.status(200).json({
+      projectId: projectDoc.id,
+      ...projectDoc.data(),
+    });
+  } catch (error) {
+    console.error("Error fetching project:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
 
 // To create a new project
 const createProject = asyncHandler(async (req, res) => {

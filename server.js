@@ -4,7 +4,7 @@ const admin = require("./firebaseAdmin");
 
 const cors = require("cors");
 const cliRoutes = require("./routes/cli-routes");
-const projectRoutes = require("./routes/project");
+const projectRoutes = require("./routes/project-routes");
 const userRoutes = require("./routes/user-routes");
 
 dotenv.config();
