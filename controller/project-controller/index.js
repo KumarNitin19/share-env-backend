@@ -16,10 +16,21 @@ const getAllProjects = asyncHandler(async (req, res) => {
         .json({ error: "No projects found for this user." });
     }
 
-    const projects = querySnapshot.docs.map((doc) => ({
-      projectId: doc.id,
-      ...doc.data(),
-    }));
+    const projects = querySnapshot.docs.map((doc) => {
+      // Convert Firestore timestamp to readable date
+      const projectData = doc.data();
+
+      if (projectData.createdAt) {
+        projectData.createdAt = projectData.createdAt.toDate(); // Convert to JS Date
+      }
+      if (projectData.updatedAt) {
+        projectData.updatedAt = projectData.updatedAt.toDate(); // Handle updatedAt if it exists
+      }
+      return {
+        projectId: doc.id,
+        ...doc.data(),
+      };
+    });
 
     res.status(200).json(projects);
   } catch (error) {
