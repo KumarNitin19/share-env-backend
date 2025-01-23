@@ -5,11 +5,14 @@ const {
   createProject,
   editProject,
   deleteProject,
+  getProject,
 } = require("../../controller/project-controller");
 
 const router = express.Router();
 
 router.get("/projects/", authenticateUser, getAllProjects); // To get all projects
+
+router.get("/project/:projectId", getProject); // To get all projects
 
 router.post("/add-project/", authenticateUser, createProject); // To create a project
 

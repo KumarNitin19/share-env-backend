@@ -28,6 +28,8 @@ const getAllProjects = asyncHandler(async (req, res) => {
   }
 });
 
+const getProject = asyncHandler(async (req, res) => {});
+
 // To create a new project
 const createProject = asyncHandler(async (req, res) => {
   try {
@@ -54,7 +56,7 @@ const createProject = asyncHandler(async (req, res) => {
     const projectId = uuidv4();
     // Add the project to the "projects" collection
     const projectsRef = db.collection("projects");
-    const newProject = await projectsRef.doc(projectId).set({
+    await projectsRef.doc(projectId).set({
       uid, // Associate the project with the user
       id: projectId,
       projectName,
@@ -144,4 +146,10 @@ const deleteProject = asyncHandler(async (req, res) => {
   }
 });
 
-module.exports = { createProject, editProject, deleteProject, getAllProjects };
+module.exports = {
+  createProject,
+  editProject,
+  deleteProject,
+  getAllProjects,
+  getProject,
+};
