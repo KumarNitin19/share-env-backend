@@ -41,10 +41,19 @@ const getProject = asyncHandler(async (req, res) => {
       return res.status(404).json({ error: "Project not found." });
     }
 
+    // Convert Firestore timestamp to readable date
+    const projectData = projectDoc.data();
+    if (projectData.createdAt) {
+      projectData.createdAt = projectData.createdAt.toDate(); // Convert to JS Date
+    }
+    if (projectData.updatedAt) {
+      projectData.updatedAt = projectData.updatedAt.toDate(); // Handle updatedAt if it exists
+    }
+
     // Return the project data
     res.status(200).json({
       projectId: projectDoc.id,
-      ...projectDoc.data(),
+      ...projectData,
     });
   } catch (error) {
     console.error("Error fetching project:", error);
