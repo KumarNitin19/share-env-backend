@@ -188,10 +188,51 @@ const deleteProject = asyncHandler(async (req, res) => {
   }
 });
 
+const shareProject = asyncHandler(async (req, res) => {
+  const { projectId, githubUsername } = req.body;
+  const token = req.headers.authorization?.split(" ")[1];
+
+  if (!token) return res.status(401).send({ error: "Unauthorized" });
+
+  try {
+    // Verify the token
+    const decodedToken = await admin.auth().verifyIdToken(token);
+    const userEmail = decodedToken.email;
+
+    // Fetch project details
+    const projectRef = db.collection("projects").doc(projectId);
+    const project = await projectRef.get();
+
+    if (!project.exists) {
+      return res.status(404).send({ error: "Project not found" });
+    }
+
+    const projectData = project.data();
+
+    // Only the owner can add collaborators
+    if (projectData.owner !== userEmail) {
+      return res.status(403).send({ error: "Permission denied" });
+    }
+
+    // Add collaborator
+    const updatedCollaborators = projectData.collaborators || [];
+    if (!updatedCollaborators.includes(githubUsername)) {
+      updatedCollaborators.push(githubUsername);
+    }
+
+    await projectRef.update({ collaborators: updatedCollaborators });
+    res.status(200).send({ message: "Collaborator added successfully" });
+  } catch (error) {
+    console.error("Error adding collaborator:", error);
+    res.status(500).send({ error: "Internal server error" });
+  }
+});
+
 module.exports = {
   createProject,
   editProject,
   deleteProject,
   getAllProjects,
   getProject,
+  shareProject,
 };
