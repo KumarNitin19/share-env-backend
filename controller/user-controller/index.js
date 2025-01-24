@@ -3,7 +3,6 @@ const asyncHandler = require("express-async-handler");
 const { db } = require("../../firebase");
 const { v4: uuidv4 } = require("uuid");
 const { setCustomClaims } = require("../../utils/userUtils");
-const { getDatabase, ref, get } = require("firebase/database");
 
 // User login
 const Login = asyncHandler(async (req, res) => {
@@ -76,16 +75,4 @@ const AddPrivateKeyToFirebaseClaims = asyncHandler(async (req, res) => {
   }
 });
 
-const checkGithubAccess = async (githubUsername) => {
-  const db = getDatabase();
-  const snapshot = await get(ref(db, `users/${githubUsername}`));
-  if (snapshot.exists() && snapshot.val().access) {
-    console.log("Access granted");
-    return true;
-  } else {
-    console.error("Access denied");
-    return false;
-  }
-};
-
-module.exports = { Login, AddPrivateKeyToFirebaseClaims, checkGithubAccess };
+module.exports = { Login, AddPrivateKeyToFirebaseClaims };
