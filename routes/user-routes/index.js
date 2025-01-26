@@ -8,6 +8,7 @@ const authenticateUser = require("../../middleware/privateRoute.middleware");
 const router = express.Router();
 
 router.get("/signin/", Login);
+
 router.post(
   "/generate-private-key/",
   authenticateUser,

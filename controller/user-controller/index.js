@@ -2,7 +2,7 @@ const admin = require("firebase-admin");
 const asyncHandler = require("express-async-handler");
 const { db } = require("../../firebase");
 const { v4: uuidv4 } = require("uuid");
-const { setCustomClaims } = require("../../utils/userUtils");
+const { setCustomClaims, getUserUid } = require("../../utils/userUtils");
 
 // User login
 const Login = asyncHandler(async (req, res) => {
@@ -61,6 +61,7 @@ const Login = asyncHandler(async (req, res) => {
 // To generate and add private key to custom claims
 const AddPrivateKeyToFirebaseClaims = asyncHandler(async (req, res) => {
   try {
+    const uid = await getUserUid(req);
     // Add tenantId as a custom claim
     const varVaultPrivateKey = uuidv4();
     await setCustomClaims(uid, varVaultPrivateKey);
@@ -69,6 +70,7 @@ const AddPrivateKeyToFirebaseClaims = asyncHandler(async (req, res) => {
       privateKey: varVaultPrivateKey,
     });
   } catch (error) {
+    console.log(error);
     res.status(500).json({
       message: "Something went wrong, please try again!!",
     });
