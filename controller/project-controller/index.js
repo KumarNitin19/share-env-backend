@@ -11,9 +11,7 @@ const getAllProjects = asyncHandler(async (req, res) => {
     const querySnapshot = await projectsRef.where("uid", "==", uid).get();
 
     if (querySnapshot.empty) {
-      return res
-        .status(404)
-        .json({ error: "No projects found for this user." });
+      return res.status(200).json({ projects: [] });
     }
 
     const projects = querySnapshot.docs.map((doc) => {
