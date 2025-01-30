@@ -6,6 +6,7 @@ const cors = require("cors");
 const cliRoutes = require("./routes/cli-routes");
 const projectRoutes = require("./routes/project-routes");
 const userRoutes = require("./routes/user-routes");
+const envGroupRoutes = require("./routes/env-group-routes");
 const { execSync } = require("child_process");
 const fetch = require("node-fetch");
 const fs = require("fs");
@@ -19,7 +20,7 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 app.use("/cli", cliRoutes);
-app.use("/api/v1", [userRoutes, projectRoutes]);
+app.use("/api/v1", [userRoutes, projectRoutes, envGroupRoutes]);
 
 app.listen(PORT, console.log(`App running on port ${PORT}`));
 
