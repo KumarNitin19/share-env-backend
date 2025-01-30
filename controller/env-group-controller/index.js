@@ -13,11 +13,9 @@ const createENVGroup = asyncHandler(async (req, res) => {
       !Array.isArray(variables) ||
       variables.length === 0
     ) {
-      return res
-        .status(400)
-        .json({
-          error: "Project ID, group name and variables array are required.",
-        });
+      return res.status(400).json({
+        error: "Project ID, group name and variables array are required.",
+      });
     }
 
     // Generate unique group ID
@@ -80,4 +78,28 @@ const getENVGroups = asyncHandler(async (req, res) => {
   }
 });
 
-module.exports = { createENVGroup, getENVGroups };
+const deleteENVGroup = asyncHandler(async (req, res) => {
+  try {
+    const { groupId } = req.params; // Extract groupId from URL
+
+    // Reference the group document
+    const groupRef = db.collection("groups").doc(groupId);
+    const groupDoc = await groupRef.get();
+
+    // Check if the group exists
+    if (!groupDoc.exists) {
+      return res.status(404).json({ error: "Group not found." });
+    }
+
+    // Delete the group
+    await groupRef.delete();
+
+    // Respond with success
+    res.status(200).json({ message: "Group deleted successfully!" });
+  } catch (error) {
+    console.error("Error deleting group:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+module.exports = { createENVGroup, getENVGroups, deleteENVGroup };
