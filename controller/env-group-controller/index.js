@@ -4,13 +4,20 @@ const { v4: uuidv4 } = require("uuid");
 
 const createENVGroup = asyncHandler(async (req, res) => {
   try {
-    const { projectId, variables } = req.body;
+    const { projectId, variables, groupName } = req.body;
 
     // Validate input
-    if (!projectId || !Array.isArray(variables) || variables.length === 0) {
+    if (
+      !projectId ||
+      !groupName ||
+      !Array.isArray(variables) ||
+      variables.length === 0
+    ) {
       return res
         .status(400)
-        .json({ error: "Project ID and variables array are required." });
+        .json({
+          error: "Project ID, group name and variables array are required.",
+        });
     }
 
     // Generate unique group ID
@@ -19,6 +26,7 @@ const createENVGroup = asyncHandler(async (req, res) => {
     // Create group object
     const groupData = {
       groupId,
+      groupName,
       projectId,
       variables,
       createdAt: new Date(),
