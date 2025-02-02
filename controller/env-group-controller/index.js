@@ -56,9 +56,7 @@ const getENVGroups = asyncHandler(async (req, res) => {
 
     // Check if any groups exist
     if (groupsSnapshot.empty) {
-      return res
-        .status(404)
-        .json({ error: "No groups found for this project." });
+      return res.status(200).json({ projectId, groups: [] });
     }
 
     // Extract group data
