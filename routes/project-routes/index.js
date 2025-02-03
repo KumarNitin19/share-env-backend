@@ -20,6 +20,6 @@ router.put("/project/:projectId", authenticateUser, editProject); // To update t
 
 router.delete("/delete-project/:projectId", authenticateUser, deleteProject); // To delete the project
 
-router.post("/share-project/", authenticateUser, deleteProject); // To delete the project
+router.post("/project/:projectId/invite", authenticateUser, deleteProject); // To share the project
 
 module.exports = router;
