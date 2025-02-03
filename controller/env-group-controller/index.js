@@ -44,7 +44,7 @@ const createENVGroup = asyncHandler(async (req, res) => {
   }
 });
 
-const getENVGroups = asyncHandler(async (req, res) => {
+const getAllENVGroups = asyncHandler(async (req, res) => {
   try {
     const { projectId } = req.params; // Extract projectId from the URL
 
@@ -100,4 +100,4 @@ const deleteENVGroup = asyncHandler(async (req, res) => {
   }
 });
 
-module.exports = { createENVGroup, getENVGroups, deleteENVGroup };
+module.exports = { createENVGroup, getAllENVGroups, deleteENVGroup };
