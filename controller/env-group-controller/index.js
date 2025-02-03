@@ -100,4 +100,52 @@ const deleteENVGroup = asyncHandler(async (req, res) => {
   }
 });
 
-module.exports = { createENVGroup, getAllENVGroups, deleteENVGroup };
+const updateENVGroup = asyncHandler(async (req, res) => {
+  try {
+    const { groupId } = req.params; // Extract groupId from the URL
+    const { groupName, variables } = req.body; // Extract fields to update
+
+    // Validate input
+    if (!groupName && (!Array.isArray(variables) || variables.length === 0)) {
+      return res.status(400).json({
+        error:
+          "At least one field (groupName or variables) is required to update.",
+      });
+    }
+
+    // Reference the group document
+    const groupRef = db.collection("groups").doc(groupId);
+    const groupDoc = await groupRef.get();
+
+    // Check if the group exists
+    if (!groupDoc.exists) {
+      return res.status(404).json({ error: "Group not found." });
+    }
+
+    // Build update object
+    const updatedFields = {};
+    if (groupName) updatedFields.groupName = groupName;
+    if (Array.isArray(variables) && variables.length > 0)
+      updatedFields.variables = variables;
+    updatedFields.updatedAt = new Date(); // Add updatedAt timestamp
+
+    // Update the group
+    await groupRef.update(updatedFields);
+
+    // Respond with success
+    res.status(200).json({
+      message: "Group updated successfully!",
+      updatedFields,
+    });
+  } catch (error) {
+    console.error("Error updating group:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+module.exports = {
+  createENVGroup,
+  getAllENVGroups,
+  updateENVGroup,
+  deleteENVGroup,
+};
