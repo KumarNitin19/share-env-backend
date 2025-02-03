@@ -135,7 +135,7 @@ const updateENVGroup = asyncHandler(async (req, res) => {
     // Respond with success
     res.status(200).json({
       message: "Group updated successfully!",
-      updatedFields,
+      group: { ...updatedFields },
     });
   } catch (error) {
     console.error("Error updating group:", error);
