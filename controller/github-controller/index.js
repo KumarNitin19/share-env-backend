@@ -50,4 +50,31 @@ const shareProjectWithTeam = asyncHandler(async (req, res) => {
   }
 });
 
-module.exports = { shareProjectWithTeam };
+const getUserGithubRepos = asyncHandler(async (req, res) => {
+  try {
+    const { githubAccessToken } = req.query;
+
+    if (!githubAccessToken) {
+      return res
+        .status(400)
+        .json({ error: "GitHub access token is required." });
+    }
+
+    const response = await axios.get("https://api.github.com/user/repos", {
+      headers: { Authorization: `Bearer ${githubAccessToken}` },
+    });
+
+    const repos = response.data.map((repo) => ({
+      name: repo.name,
+      full_name: repo.full_name,
+      url: repo.html_url,
+    }));
+
+    res.status(200).json(repos);
+  } catch (error) {
+    console.error("Error fetching repos:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+module.exports = { shareProjectWithTeam, getUserGithubRepos };
