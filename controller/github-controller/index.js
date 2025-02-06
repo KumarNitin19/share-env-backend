@@ -4,7 +4,8 @@ const axios = require("axios");
 const shareProjectWithTeam = asyncHandler(async (req, res) => {
   try {
     const { projectId } = req.params;
-    const { githubRepo, githubAccessToken } = req.body;
+    const { githubAccessToken } = req.query;
+    const { githubRepo } = req.body;
 
     if (!githubRepo || !githubAccessToken) {
       return res
