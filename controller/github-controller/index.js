@@ -1,45 +1,7 @@
 const asyncHandler = require("express-async-handler");
 const axios = require("axios");
-
-const shareProjectWithTeam = asyncHandler(async (req, res) => {
-  try {
-    const { projectId } = req.params;
-    const { githubAccessToken } = req.query;
-    const { githubRepo } = req.body;
-
-    if (!githubRepo || !githubAccessToken) {
-      return res
-        .status(400)
-        .json({ error: "GitHub repo and access token are required." });
-    }
-
-    // Fetch collaborators from GitHub
-    const collaboratorsResponse = await axios.get(
-      `https://api.github.com/repos/${githubRepo}/collaborators`,
-      { headers: { Authorization: `Bearer ${githubAccessToken}` } }
-    );
-
-    // Extract emails (GitHub hides emails by default, so we assume usernames)
-    const members = collaboratorsResponse.data.map((user) => ({
-      username: user.login,
-      email: user.email || null, // GitHub API may not return email
-      role: user.permissions.admin ? "admin" : "collaborator",
-    }));
-
-    // Update Firestore
-    const projectRef = db.collection("projects").doc(projectId);
-    await projectRef.update({ githubRepo, projectMembers: members });
-
-    res.status(200).json({
-      message: "GitHub repository linked successfully!",
-      githubRepo,
-      members,
-    });
-  } catch (error) {
-    console.error("Error linking GitHub repository:", error);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-});
+const { db } = require("../../firebase");
+const { fetchCollaborators } = require("../../utils/githubUtil");
 
 const getUserGithubRepos = asyncHandler(async (req, res) => {
   try {
@@ -51,9 +13,12 @@ const getUserGithubRepos = asyncHandler(async (req, res) => {
         .json({ error: "GitHub access token is required." });
     }
 
-    const response = await axios.get("https://api.github.com/user/repos", {
-      headers: { Authorization: `Bearer ${githubAccessToken}` },
-    });
+    const response = await axios.get(
+      "https://api.github.com/user/repos?affiliation=owner",
+      {
+        headers: { Authorization: `Bearer ${githubAccessToken}` },
+      }
+    );
 
     const repos = response.data.map((repo) => ({
       repo_name: repo.name,
@@ -64,6 +29,52 @@ const getUserGithubRepos = asyncHandler(async (req, res) => {
     res.status(200).json(repos);
   } catch (error) {
     console.error("Error fetching repos:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+const shareProjectWithTeam = asyncHandler(async (req, res) => {
+  try {
+    const { githubAccessToken, projectId } = req.query;
+    const { githubUsername, githubRepo } = req.body;
+
+    if (!githubRepo || !githubAccessToken) {
+      return res
+        .status(400)
+        .json({ error: "GitHub repo and access token are required." });
+    }
+
+    // Fetch collaborators from GitHub
+    const projectMembers = await fetchCollaborators(
+      githubAccessToken,
+      githubUsername,
+      githubRepo
+    );
+
+    const projectRef = db.collection("projects").doc(projectId);
+    const projectDoc = await projectRef.get();
+
+    // Check if the project exists
+    if (!projectDoc.exists) {
+      return res.status(404).json({ error: "Project not found." });
+    }
+
+    // Prepare update fields
+    const updates = {};
+    if (projectMembers?.length) updates.projectMembers = projectMembers;
+
+    updates.updatedAt = new Date(); // Track when the update occurred
+
+    // Update the project in Firestore
+    await projectRef.update(updates);
+
+    res.status(200).json({
+      message: "GitHub repository linked successfully!",
+      githubRepo,
+      projectMembers,
+    });
+  } catch (error) {
+    console.error("Error linking GitHub repository:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
