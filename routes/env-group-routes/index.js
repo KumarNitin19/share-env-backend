@@ -9,7 +9,7 @@ const {
 
 const router = express.Router();
 
-router.get("/groups/:projectId", authenticateUser, getAllENVGroups);
+router.get("/groups/:projectId", getAllENVGroups);
 router.post("/add-group", authenticateUser, createENVGroup);
 router.put("/group/:groupId", authenticateUser, updateENVGroup);
 router.delete("/delete-group/:groupId", authenticateUser, deleteENVGroup);

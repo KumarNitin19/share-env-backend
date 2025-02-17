@@ -8,10 +8,6 @@ const projectRoutes = require("./routes/project-routes");
 const userRoutes = require("./routes/user-routes");
 const envGroupRoutes = require("./routes/env-group-routes");
 const githubRoutes = require("./routes/github-routes");
-const { execSync } = require("child_process");
-const fetch = require("node-fetch");
-const fs = require("fs");
-const path = require("path");
 
 dotenv.config();
 const PORT = process.env.PORT || 7000;
