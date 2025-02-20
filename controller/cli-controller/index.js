@@ -1,9 +1,27 @@
 const asyncHandler = require("express-async-handler");
+const { db } = require("../../firebaseAdmin");
 
 const getAllENVVariables = asyncHandler(async (req, res) => {
   try {
-    const { projectId } = req.params; // Extract projectId from the URL
+    const { githubUserName, projectId } = req.params; // Extract githubUserName & projectId from the URL
 
+    if (!githubUserName) {
+      res.status(403).json({
+        error:
+          "Github acount not found, please login your github account in vscode.",
+      });
+    }
+
+    if (!projectId) {
+      res.status(404).json({
+        error: "Project Id not found, make sure you have varVault.json file.",
+      });
+    }
+
+    const projectRef = db.collection("projects").doc(projectId);
+    const projectDoc = await projectRef.get();
+
+    console.log(projectDoc);
     // Query groups where projectId matches
     const groupsSnapshot = await db
       .collection("groups")
