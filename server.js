@@ -1,6 +1,5 @@
 const express = require("express");
 const dotenv = require("dotenv");
-const admin = require("./firebaseAdmin");
 
 const cors = require("cors");
 const cliRoutes = require("./routes/cli-routes");
@@ -20,5 +19,3 @@ app.use("/cli", cliRoutes);
 app.use("/api/v1", [userRoutes, projectRoutes, envGroupRoutes, githubRoutes]);
 
 app.listen(PORT, console.log(`App running on port ${PORT}`));
-
-// console.log(crypto.randomBytes(64).toString("base64"));
