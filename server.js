@@ -10,7 +10,7 @@ const envGroupRoutes = require("./routes/env-group-routes");
 const githubRoutes = require("./routes/github-routes");
 
 dotenv.config();
-const PORT = process.env.PORT || 7000;
+const PORT = process.env.PORT || 3000;
 
 const app = express();
 
