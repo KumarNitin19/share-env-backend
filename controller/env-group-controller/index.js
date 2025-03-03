@@ -5,12 +5,13 @@ const { encryptData, decryptData } = require("../../utils/encryptionUtils");
 
 const createENVGroup = asyncHandler(async (req, res) => {
   try {
-    const { projectId, variables, groupName } = req.body;
     const varVaultPrivateKey = req.headers["varvault-private-key"]; // Get private key from headers
 
     if (!varVaultPrivateKey) {
       return res.status(400).json({ error: "Missing private key in headers!" });
     }
+
+    const { projectId, variables, groupName } = req.body;
 
     // Validate input
     if (
@@ -52,12 +53,13 @@ const createENVGroup = asyncHandler(async (req, res) => {
 
 const getAllENVGroups = asyncHandler(async (req, res) => {
   try {
-    const { projectId } = req.params; // Extract projectId from the URL
     const varVaultPrivateKey = req.headers["varvault-private-key"]; // Get private key from headers
 
     if (!varVaultPrivateKey) {
       return res.status(400).json({ error: "Missing private key in headers!" });
     }
+
+    const { projectId } = req.params; // Extract projectId from the URL
 
     // Query groups where projectId matches
     const groupsSnapshot = await db
@@ -122,6 +124,12 @@ const deleteENVGroup = asyncHandler(async (req, res) => {
 
 const updateENVGroup = asyncHandler(async (req, res) => {
   try {
+    const varVaultPrivateKey = req.headers["varvault-private-key"]; // Get private key from headers
+
+    if (!varVaultPrivateKey) {
+      return res.status(400).json({ error: "Missing private key in headers!" });
+    }
+
     const { groupId } = req.params; // Extract groupId from the URL
     const { groupName, variables } = req.body; // Extract fields to update
 
@@ -146,7 +154,7 @@ const updateENVGroup = asyncHandler(async (req, res) => {
     const updatedFields = {};
     if (groupName) updatedFields.groupName = groupName;
     if (Array.isArray(variables) && variables.length > 0)
-      updatedFields.variables = variables;
+      updatedFields.variables = encryptData(variables, varVaultPrivateKey);
     updatedFields.updatedAt = new Date(); // Add updatedAt timestamp
 
     // Update the group
@@ -155,7 +163,7 @@ const updateENVGroup = asyncHandler(async (req, res) => {
     // Respond with success
     res.status(200).json({
       message: "Group updated successfully!",
-      group: { ...updatedFields },
+      group: { ...updatedFields, variables: variables },
     });
   } catch (error) {
     console.error("Error updating group:", error);
