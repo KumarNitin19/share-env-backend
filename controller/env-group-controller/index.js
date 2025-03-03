@@ -1,10 +1,16 @@
 const asyncHandler = require("express-async-handler");
 const { db } = require("../../firebase");
 const { v4: uuidv4 } = require("uuid");
+const { encryptData, decryptData } = require("../../utils/encryptionUtils");
 
 const createENVGroup = asyncHandler(async (req, res) => {
   try {
     const { projectId, variables, groupName } = req.body;
+    const varVaultPrivateKey = req.headers["varvault-private-key"]; // Get private key from headers
+
+    if (!varVaultPrivateKey) {
+      return res.status(400).json({ error: "Missing private key in headers!" });
+    }
 
     // Validate input
     if (
@@ -26,7 +32,7 @@ const createENVGroup = asyncHandler(async (req, res) => {
       groupId,
       groupName,
       projectId,
-      variables,
+      variables: encryptData(variables, varVaultPrivateKey),
       createdAt: new Date(),
     };
 
@@ -47,6 +53,11 @@ const createENVGroup = asyncHandler(async (req, res) => {
 const getAllENVGroups = asyncHandler(async (req, res) => {
   try {
     const { projectId } = req.params; // Extract projectId from the URL
+    const varVaultPrivateKey = req.headers["varvault-private-key"]; // Get private key from headers
+
+    if (!varVaultPrivateKey) {
+      return res.status(400).json({ error: "Missing private key in headers!" });
+    }
 
     // Query groups where projectId matches
     const groupsSnapshot = await db
@@ -65,10 +76,19 @@ const getAllENVGroups = asyncHandler(async (req, res) => {
       ...doc.data(),
     }));
 
+    const decryptedData = groups?.map((group) => ({
+      ...group,
+      variables: decryptData(
+        group?.variables?.encryptedData,
+        group?.variables?.iv,
+        varVaultPrivateKey
+      ),
+    }));
+
     // Return response
     res.status(200).json({
       projectId,
-      groups,
+      groups: decryptedData,
     });
   } catch (error) {
     console.error("Error fetching groups:", error);
