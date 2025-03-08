@@ -3,7 +3,7 @@ const { db } = require("../../firebaseAdmin");
 
 const getAllENVVariables = asyncHandler(async (req, res) => {
   try {
-    const { githubUserName, projectId } = req.params; // Extract githubUserName & projectId from the URL
+    const { githubUserName, projectId, privateKey } = req.params; // Extract githubUserName & projectId from the URL
 
     if (!githubUserName) {
       res.status(403).json({
@@ -15,6 +15,13 @@ const getAllENVVariables = asyncHandler(async (req, res) => {
     if (!projectId) {
       res.status(404).json({
         error: "Project Id not found, make sure you have varVault.json file.",
+      });
+    }
+
+    if (!privateKey) {
+      res.status(404).json({
+        error:
+          "Varvault private key not found, make sure you have varVaultPrivateKey in varVault.json file.",
       });
     }
 
@@ -46,10 +53,19 @@ const getAllENVVariables = asyncHandler(async (req, res) => {
         ...doc.data(),
       }));
 
+      const decryptedData = groups?.map((group) => ({
+        ...group,
+        variables: decryptData(
+          group?.variables?.encryptedData,
+          group?.variables?.iv,
+          varVaultPrivateKey
+        ),
+      }));
+
       // Return response
       res.status(200).json({
         projectId,
-        groups,
+        groups: decryptedData,
       });
     } else {
       res.status(403).json({
